@@ -1,0 +1,21 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Specifica torch con +cpu per evitare ambiguità
+torch==2.5.1+cpu 
+
+# Web Server & API
+fastapi
+uvicorn[standard]==0.34.0
+
+# Machine Learning & NLP
+transformers==4.46.0
+pandas
+numpy
+scikit-learn
+evaluate
+datasets
+kaggle
+accelerate
+
+# Database
+sqlalchemy

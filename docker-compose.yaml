@@ -1,0 +1,46 @@
+services:
+  # La nostra applicazione di Sentiment Analysis
+  ml_app:
+    build: .
+    container_name: machine_innovators_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/opt/data  # Per persistere il database SQLite
+      - ./app:/app  # Per il codice dell'applicazione
+      - ./versioned_models:/opt/versioned_models  # Per i modelli versionati
+    environment:
+      - MODEL_NAME=cardiffnlp/twitter-roberta-base-sentiment-latest
+    entrypoint: /bin/bash
+    command: 
+      - -c
+      - |
+        ls /app
+        uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # Grafana per la dashboard di reputazione
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: mlops_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./data:/opt/data
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - ml_app
+    environment:
+      GF_PLUGINS_PREINSTALL: 'frser-sqlite-datasource'
+      GF_SECURITY_ADMIN_USER: 'worker'
+      GF_SECURITY_ADMIN_PASSWORD: 'password'
+    command:
+      - "sh"
+      - "-c"
+      - "grafana cli admin
+        reset-admin-password 'password' && /run.sh"
+
+
+volumes:
+  grafana-storage:
