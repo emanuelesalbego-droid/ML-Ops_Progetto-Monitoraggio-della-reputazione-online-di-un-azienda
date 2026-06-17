@@ -2,12 +2,12 @@ import pytest
 import os
 os.environ["DATABASE_URL"] = "sqlite:///./data/sentiment_logs.db"
 from fastapi.testclient import TestClient
-from app.main import app# import main  
+from app.main import app
 
 client = TestClient(app)
 
 def test_read_root():
-    """Verifica che l'endpoint root risponda correttamente"""
+    """Verifica che l'endpoint root risponde correttamente"""
     response = client.get("/")
     assert response.status_code == 200
     assert "status" in response.json()

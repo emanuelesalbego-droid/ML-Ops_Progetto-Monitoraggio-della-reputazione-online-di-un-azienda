@@ -33,7 +33,7 @@ services:
       - ml_app
     environment:
       GF_PLUGINS_PREINSTALL: 'frser-sqlite-datasource'
-      GF_SECURITY_ADMIN_USER: 'worker'
+      GF_SECURITY_ADMIN_USER: 'user'
       GF_SECURITY_ADMIN_PASSWORD: 'password'
     command:
       - "sh"
