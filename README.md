@@ -23,8 +23,12 @@ Deploy su HuggingFace : Implementare il modello di analisi del sentiment, inclus
 Sistema di Monitoraggio: Configurare un sistema di monitoraggio per valutare continuamente le performance del modello e il sentiment rilevato
 ---
 
-# Prima di Iniziare
+# Prima di Iniziare (Aggiornato)
 
-Prima di avviare il container aggiungi la tua chiave Kaggle in app/keys/kaggle.json
-Consulta poi il readme nella cartella **app**
-Consulta il readme in **provisioning** per l'utilizzo di Grafana per il monitoring dell'applicazione
+Questa architettura è stata recentemente migliorata per supportare standard MLOps più avanzati:
+1. **Kaggle API Token**: Non è più necessario il vecchio file `kaggle.json`. Configura la variabile d'ambiente `KAGGLE_API_TOKEN` nei secrets di GitHub.
+2. **Deploy su HuggingFace**: I modelli ri-addestrati vengono inviati in cloud. Imposta `HF_TOKEN` e `HF_REPO_ID` nei secrets.
+3. **Automazione**: Il training ora avviene in modo asincrono, sicuro e programmato tramite GitHub Actions (Workflow `.github/workflows/auto_train.yml`).
+
+Consulta poi il readme nella cartella **app** per le API.
+Consulta il readme in **provisioning** per l'utilizzo di Grafana per il monitoring dell'applicazione.

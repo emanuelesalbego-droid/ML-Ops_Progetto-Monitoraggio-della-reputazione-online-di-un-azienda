@@ -10,6 +10,8 @@ from app.training import retraining
 import glob
 
 # --- CONFIGURAZIONE DATABASE (Per Grafana) ---
+# Usiamo SQLAlchemy per parlare con un database SQLite. SQLite è perfetto per lo sviluppo
+# perché salva tutto in un semplice file (sentiment_logs.db) anziché richiedere un server complesso.
 DATABASE_URL=os.getenv("DATABASE_URL", "sqlite:///./opt/data/sentiment_logs.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -40,7 +42,9 @@ class TrainingLog(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# --- SCHEMI PER API ---
+# --- SCHEMI PER API (Pydantic) ---
+# Pydantic ci assicura che i dati in entrata siano validi. 
+# Se l'utente invia un JSON senza il campo 'text', FastAPI bloccherà la richiesta automaticamente.
 class SentimentRequest(BaseModel):
     text: str
 
@@ -98,7 +102,8 @@ def load_model(model_version: str = "latest"):
         print(f"Nessuna versione locale trovata. Uso fallback: {MODEL_PATH}")
 
     try:
-        # Carichiamo dalla cartella (Hugging Face leggerà config.json e i pesi automaticamente)
+        # Carichiamo il modello in memoria usando la pipeline di HuggingFace.
+        # Questa operazione è pesante, per questo viene fatta all'avvio o solo quando richiesto.
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
         model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
         sentiment_task = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
@@ -116,6 +121,8 @@ load_model()
 
 @app.post("/predict", response_model=SentimentResponse)
 async def predict(request: SentimentRequest, background_tasks: BackgroundTasks):
+    # Endpoint principale dell'applicazione. Usiamo 'async' per permettere a FastAPI
+    # di gestire molte richieste simultaneamente senza bloccarsi.
     if state.is_training:
         return {"status": "training in progress, please try later."}
     try:
@@ -172,6 +179,8 @@ def run_retraining():
 
 @app.post("/retrain")
 async def retrain(background_tasks: BackgroundTasks):
+    # Utilizziamo i 'BackgroundTasks' di FastAPI per non bloccare la risposta HTTP.
+    # L'utente riceve subito il messaggio "Processo avviato", mentre il server lavora dietro le quinte.
     if state.is_training:
         return {"status": "training in progress, please try later."}
     background_tasks.add_task(run_retraining)

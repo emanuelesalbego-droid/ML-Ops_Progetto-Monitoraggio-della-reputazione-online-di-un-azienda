@@ -17,12 +17,11 @@ In questo file è presente il cuore del funzionamento del servizio API con i seg
 * **POST /predict**: Tramite chiamata POST è possibile inviare una stringa che viene valutata dal modello caricato.
     * Restituisce un dizionario con la categoria (label) che può essere di 3 tipi: **negative**, **neutral** e **positive**, insieme al grado di accuratezza della predizione (score).
     * Registra il risultato della predizione nel database locale **SQLite**, disponibile per l'interfaccia di monitoraggio **Grafana**.
-* **GET /retrain**: Inserendo la chiave per Kaggle nella cartella keys/kaggle.json, è possibile eseguire il training del modello base.
+* **GET /retrain**: Avvia il training del modello in background (oppure eseguilo in modo indipendente tramite GitHub Actions e `scripts/esegui_training.py`).
     * Il database di default è: [Sentiment Analysis Dataset](https://www.kaggle.com/datasets/mdismielhossenabir/sentiment-analysis).
-    * Per semplicità e velocità dell'esercizio, il processo esegue solo un'epoca.
-    * Salva i risultati del retraining nel database locale SQLite, consultabili tramite Grafana.
-    * I pesi del modello aggiornato vengono versionati giornalmente in locale, permettendo l'implementazione del deploy in HuggingFace (non implementato).
-    * **Nota:** Questa funzione blocca le chiamate a /retrain e /predict per evitare errori e rallentamenti del servizio.
+    * Richiede l'impostazione della variabile d'ambiente `KAGGLE_API_TOKEN`.
+    * I pesi del modello aggiornato vengono versionati giornalmente in locale, e se forniti i token (`HF_TOKEN`, `HF_REPO_ID`), vengono automaticamente **rilasciati (deploy) su HuggingFace Hub**.
+    * **Nota:** Questa funzione blocca le chiamate a /retrain e /predict durante l'esecuzione sincrona per evitare errori e rallentamenti del servizio.
 * **GET /metrics**: Restituisce il numero di predizioni eseguite.
 * **GET /models_list**: Restituisce l'elenco dei modelli creati in locale dal retraining.
 * **POST /change_model**: Tramite chiamata POST è possibile passare il nome del modello da caricare per le predizioni o per il retraining.

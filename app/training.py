@@ -11,6 +11,8 @@ from datasets import Dataset, DatasetDict
 import kaggle
 
 def retraining(MODEL_NAME,tokenizer):
+    # Usiamo un dataset "Ground Truth" da Kaggle, non usiamo le vecchie predizioni SQLite 
+    # per evitare che il modello impari dai suoi stessi errori (Data Drift / Feedback Loop).
     dataset_id = "mdismielhossenabir/sentiment-analysis"
 
     # Scarica il dataset utilizzando l'API di Kaggle
@@ -20,6 +22,8 @@ def retraining(MODEL_NAME,tokenizer):
     label_mapping = {"negative": 0, "neutral": 1, "positive": 2}
     dataset['label'] = dataset['label'].map(label_mapping)
     dataset = Dataset.from_pandas(dataset[['text', 'label']])
+    
+    # Dividiamo il dataset: 80% per allenare la rete (train), 20% per valutarla e calcolare le metriche (validation)
     dataset = DatasetDict({
         'train': dataset,
         'validation': dataset.train_test_split(test_size=0.2)['test'],
@@ -41,8 +45,11 @@ def retraining(MODEL_NAME,tokenizer):
     # tokenized_datasets['train+test'] = concatenate_datasets([tokenized_datasets['train'],
     #                                                          tokenized_datasets['test']])
 
+    # Inizializziamo il modello pre-addestrato partendo dal modello base fornito
     model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=3)
 
+    # Configurazione di Training (Hyperparameters). Stiamo usando 1 sola epoca (passaggio sui dati)
+    # per rendere veloce questo tutorial, in produzione si usano 3-5 epoche.
     training_args = TrainingArguments(
         do_eval=False,
         #evaluation_strategy='epoch',
