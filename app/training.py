@@ -6,8 +6,7 @@ from transformers import AutoTokenizer
 from transformers import AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
 from datasets import Dataset, DatasetDict
-import os
-os.environ['KAGGLE_CONFIG_DIR'] = "app/keys"
+# rimosso os.environ['KAGGLE_CONFIG_DIR'] per supportare KAGGLE_API_TOKEN
 
 import kaggle
 
@@ -77,6 +76,21 @@ def retraining(MODEL_NAME,tokenizer):
     # SALVATAGGIO CORRETTO (Crea una cartella con i file necessari)
     trainer.save_model(version_folder)
     tokenizer.save_pretrained(version_folder)
+
+    # Logica per il deploy su HuggingFace
+    import os
+    hf_token = os.getenv("HF_TOKEN")
+    hf_repo_id = os.getenv("HF_REPO_ID")
+    
+    if hf_token and hf_repo_id:
+        print(f"Deploy del modello su HuggingFace Hub nel repository: {hf_repo_id}...")
+        try:
+            from huggingface_hub import login, upload_folder
+            login(token=hf_token)
+            upload_folder(folder_path=version_folder, repo_id=hf_repo_id, repo_type="model")
+            print("Deploy su HuggingFace completato con successo!")
+        except Exception as e:
+            print(f"Errore durante il deploy su HuggingFace: {e}")
 
     res = trainer.evaluate(tokenized_datasets['validation'])
     print(res)
