@@ -1,0 +1,40 @@
+name: Scheduled Auto-Training
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Esegui ogni domenica alle 3:00 AM
+  workflow_dispatch: # Permette l'avvio manuale dal sito GitHub
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create required directories
+        run: |
+          mkdir -p data versioned_models app/keys
+          chmod -R 777 data versioned_models
+
+      - name: Write Kaggle key
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        run: |
+          echo "{\"username\":\"$KAGGLE_USERNAME\",\"key\":\"$KAGGLE_KEY\"}" > app/keys/kaggle.json
+
+      - name: Run training inside Docker
+        run: |
+          # Avviamo lo script dentro al container di ml_app così ha tutte le librerie pronte
+          docker-compose build ml_app
+          docker-compose run --rm ml_app python scripts/esegui_training.py
+
+      - name: Commit and push new model
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add versioned_models/
+          # Se non ci sono cambiamenti (o se fallisce), il workflow non va in errore grazie all' '|| true'
+          git commit -m "Auto-retrain model (GitHub Action)" || true
+          git push

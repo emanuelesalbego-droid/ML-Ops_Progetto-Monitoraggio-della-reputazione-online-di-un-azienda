@@ -57,7 +57,7 @@ state = AppState()
 # --- APP FASTAPI ---
 app = FastAPI(title="MachineInnovators Sentiment API", version="1.0.0")
 
-MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL_PATH = os.getenv("MODEL_NAME", "cardiffnlp/twitter-roberta-base-sentiment-latest")
 
 @app.get("/")
 def read_root():
@@ -90,11 +90,11 @@ def load_model(model_version: str = "latest"):
             MODEL_PATH = max(list_of_versions, key=os.path.getmtime)
             print(f"Caricamento modello LOCALE dalla CARTELLA più recente: {MODEL_PATH}")
         else:
-            MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+            MODEL_PATH = os.getenv("MODEL_NAME", "cardiffnlp/twitter-roberta-base-sentiment-latest")
     elif model_version == "base":
         MODEL_PATH = "cardiffnlp/twitter-roberta-base-sep2022"
     else:
-        MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+        MODEL_PATH = os.getenv("MODEL_NAME", "cardiffnlp/twitter-roberta-base-sentiment-latest")
         print(f"Nessuna versione locale trovata. Uso fallback: {MODEL_PATH}")
 
     try:
@@ -107,7 +107,7 @@ def load_model(model_version: str = "latest"):
     except Exception as e:
         print(f"Errore critico nel caricamento: {e}")
         # Fallback di sicurezza se la cartella è corrotta
-        MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+        MODEL_PATH = os.getenv("MODEL_NAME", "cardiffnlp/twitter-roberta-base-sentiment-latest")
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
         model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
         sentiment_task = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
